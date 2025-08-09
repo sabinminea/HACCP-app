@@ -1,0 +1,106 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f5f5f5;
+}
+
+header {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}
+
+h1, h2 {
+    margin: 0 0 1rem 0;
+}
+
+nav.tabs {
+    display: flex;
+    background: #34495e;
+}
+
+nav.tabs button {
+    flex: 1;
+    padding: 1rem;
+    background: #34495e;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+nav.tabs button.active {
+    background: #1abc9c;
+}
+
+main {
+    padding: 1rem;
+}
+
+.tab {
+    display: none;
+    background: white;
+    padding: 1rem;
+    border-radius: 5px;
+}
+
+.tab.active {
+    display: block;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+}
+
+input, textarea, button {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+fieldset {
+    border: 1px solid #ccc;
+    padding: 0.75rem;
+    border-radius: 4px;
+}
+
+legend {
+    font-weight: bold;
+}
+
+button {
+    background: #1abc9c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #16a085;
+}
+
+.batch-entry {
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: #fafafa;
+    border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+    nav.tabs {
+        flex-direction: column;
+    }
+}

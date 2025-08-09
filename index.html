@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HACCP App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>HACCP Records</h1>
+    </header>
+
+    <nav class="tabs">
+        <button class="active" data-tab="daily">Daily Checks</button>
+        <button data-tab="monthly">Monthly Pastry Check</button>
+        <button data-tab="roast">Roast Log</button>
+    </nav>
+
+    <main>
+        <!-- DAILY CHECKS -->
+        <section id="daily" class="tab active">
+            <h2>Mala Pražarna, Krakovski nasip 10, 1000 Ljubljana</h2>
+            <form id="dailyForm">
+                <label>Fridge 1 Temp (°C): <input type="number" name="fridge1" required></label>
+                <label>Freezer 1 Temp (°C): <input type="number" name="freezer1" required></label>
+                <label>Fridge 2 Temp (°C): <input type="number" name="fridge2" required></label>
+                <label>Freezer 2 Temp (°C): <input type="number" name="freezer2" required></label>
+
+                <fieldset>
+                    <legend>Cleaning Checklist</legend>
+                    <label><input type="checkbox" name="clean_floor"> Floor cleaned</label>
+                    <label><input type="checkbox" name="clean_bar"> Bar area cleaned</label>
+                    <label><input type="checkbox" name="clean_windows"> Windows cleaned</label>
+                </fieldset>
+
+                <button type="submit">Submit Daily Check</button>
+            </form>
+        </section>
+
+        <!-- MONTHLY PASTRY CHECK -->
+        <section id="monthly" class="tab">
+            <h2>Mala Pražarna, Krakovski nasip 10, 1000 Ljubljana</h2>
+            <form id="monthlyForm">
+                <label>Pastry Name: <input type="text" name="pastry_name" required></label>
+                <label>Receiving Temp (°C): <input type="number" name="pastry_temp" required></label>
+                <label>Notes: <textarea name="pastry_notes"></textarea></label>
+                <label>Signed by: <input type="text" name="pastry_signed" required></label>
+
+                <fieldset>
+                    <legend>Pest Inspection</legend>
+                    <label><input type="checkbox" name="rodent_check"> Rodent inspection done</label>
+                    <label><input type="checkbox" name="insect_check"> Insect inspection done</label>
+                </fieldset>
+
+                <button type="submit">Submit Monthly Check</button>
+            </form>
+        </section>
+
+        <!-- ROAST LOG -->
+        <section id="roast" class="tab">
+            <h2>Mala Pražarna, Krakovski nasip 10, 1000 Ljubljana</h2>
+            <form id="roastForm">
+                <div id="batchContainer">
+                    <div class="batch-entry">
+                        <label>Traceability Number: <input type="text" name="trace_num[]" required></label>
+                        <label>Coffee Name: <input type="text" name="coffee_name[]" required></label>
+                        <label>Date of Roast: <input type="date" name="roast_date[]" required></label>
+                        <label>Quantity (kg): <input type="number" step="0.01" name="quantity[]" required></label>
+                    </div>
+                </div>
+                <button type="button" id="addBatch">+ Add Batch</button>
+                <button type="submit">Submit Roast Log</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
