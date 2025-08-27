@@ -46,6 +46,16 @@ main {
     border-radius: 5px;
 }
 
+select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    width: 100%;
+    max-width: 200px;
+    background-color: white;
+    font-size: 14px;
+}
+
 .tab.active {
     display: block;
 }
@@ -103,6 +113,14 @@ button:hover {
     font-size: 0.875rem;
     color: #666;
     margin-top: 0.5rem;
+}
+
+.status-box {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
 }
 
 .status-box {

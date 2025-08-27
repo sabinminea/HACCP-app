@@ -23,10 +23,110 @@
             <h2>Mala Pražarna, Krakovski nasip 10, 1000 Ljubljana</h2>
             <form id="dailyForm">
                 <label>Date: <input type="date" name="daily_date" required></label>
-                <label>Fridge 1 Temp (°C): <input type="number" name="fridge1" required></label>
-                <label>Freezer 1 Temp (°C): <input type="number" name="freezer1" required></label>
-                <label>Fridge 2 Temp (°C): <input type="number" name="fridge2" required></label>
-                <label>Freezer 2 Temp (°C): <input type="number" name="freezer2" required></label>
+                <label>Fridge 1 Temp (°C): 
+                    <select name="fridge1" required>
+                        <option value="" disabled selected>Select temperature</option>
+                        <option value="0">0°C</option>
+                        <option value="1">1°C</option>
+                        <option value="2">2°C</option>
+                        <option value="3">3°C</option>
+                        <option value="4">4°C</option>
+                        <option value="5">5°C</option>
+                        <option value="6">6°C</option>
+                        <option value="7">7°C</option>
+                        <option value="8">8°C</option>
+                        <option value="9">9°C</option>
+                        <option value="10">10°C</option>
+                    </select>
+                </label>
+                <label>Freezer 1 Temp (°C): 
+                    <select name="freezer1" required>
+                        <option value="" disabled selected>Select temperature</option>
+                        <option value="-30">-30°C</option>
+                        <option value="-29">-29°C</option>
+                        <option value="-28">-28°C</option>
+                        <option value="-27">-27°C</option>
+                        <option value="-26">-26°C</option>
+                        <option value="-25">-25°C</option>
+                        <option value="-24">-24°C</option>
+                        <option value="-23">-23°C</option>
+                        <option value="-22">-22°C</option>
+                        <option value="-21">-21°C</option>
+                        <option value="-20">-20°C</option>
+                        <option value="-19">-19°C</option>
+                        <option value="-18">-18°C</option>
+                        <option value="-17">-17°C</option>
+                        <option value="-16">-16°C</option>
+                        <option value="-15">-15°C</option>
+                        <option value="-14">-14°C</option>
+                        <option value="-13">-13°C</option>
+                        <option value="-12">-12°C</option>
+                        <option value="-11">-11°C</option>
+                        <option value="-10">-10°C</option>
+                        <option value="-9">-9°C</option>
+                        <option value="-8">-8°C</option>
+                        <option value="-7">-7°C</option>
+                        <option value="-6">-6°C</option>
+                        <option value="-5">-5°C</option>
+                        <option value="-4">-4°C</option>
+                        <option value="-3">-3°C</option>
+                        <option value="-2">-2°C</option>
+                        <option value="-1">-1°C</option>
+                        <option value="0">0°C</option>
+                    </select>
+                </label>
+                <label>Fridge 2 Temp (°C): 
+                    <select name="fridge2" required>
+                        <option value="" disabled selected>Select temperature</option>
+                        <option value="0">0°C</option>
+                        <option value="1">1°C</option>
+                        <option value="2">2°C</option>
+                        <option value="3">3°C</option>
+                        <option value="4">4°C</option>
+                        <option value="5">5°C</option>
+                        <option value="6">6°C</option>
+                        <option value="7">7°C</option>
+                        <option value="8">8°C</option>
+                        <option value="9">9°C</option>
+                        <option value="10">10°C</option>
+                    </select>
+                </label>
+                <label>Freezer 2 Temp (°C): 
+                    <select name="freezer2" required>
+                        <option value="" disabled selected>Select temperature</option>
+                        <option value="-30">-30°C</option>
+                        <option value="-29">-29°C</option>
+                        <option value="-28">-28°C</option>
+                        <option value="-27">-27°C</option>
+                        <option value="-26">-26°C</option>
+                        <option value="-25">-25°C</option>
+                        <option value="-24">-24°C</option>
+                        <option value="-23">-23°C</option>
+                        <option value="-22">-22°C</option>
+                        <option value="-21">-21°C</option>
+                        <option value="-20">-20°C</option>
+                        <option value="-19">-19°C</option>
+                        <option value="-18">-18°C</option>
+                        <option value="-17">-17°C</option>
+                        <option value="-16">-16°C</option>
+                        <option value="-15">-15°C</option>
+                        <option value="-14">-14°C</option>
+                        <option value="-13">-13°C</option>
+                        <option value="-12">-12°C</option>
+                        <option value="-11">-11°C</option>
+                        <option value="-10">-10°C</option>
+                        <option value="-9">-9°C</option>
+                        <option value="-8">-8°C</option>
+                        <option value="-7">-7°C</option>
+                        <option value="-6">-6°C</option>
+                        <option value="-5">-5°C</option>
+                        <option value="-4">-4°C</option>
+                        <option value="-3">-3°C</option>
+                        <option value="-2">-2°C</option>
+                        <option value="-1">-1°C</option>
+                        <option value="0">0°C</option>
+                    </select>
+                </label>
 
                 <fieldset>
                     <legend>Cleaning Checklist</legend>
@@ -48,7 +148,32 @@
             <form id="monthlyForm">
                 <label>Date: <input type="date" name="monthly_date" required></label>
                 <label>Pastry Name: <input type="text" name="pastry_name" required></label>
-                <label>Receiving Temp (°C): <input type="number" name="pastry_temp" required></label>
+                <label>Receiving Temp (°C): 
+                    <select name="pastry_temp" required>
+                        <option value="" disabled selected>Select temperature</option>
+                        <option value="-30">-30°C</option>
+                        <option value="-29">-29°C</option>
+                        <option value="-28">-28°C</option>
+                        <option value="-27">-27°C</option>
+                        <option value="-26">-26°C</option>
+                        <option value="-25">-25°C</option>
+                        <option value="-24">-24°C</option>
+                        <option value="-23">-23°C</option>
+                        <option value="-22">-22°C</option>
+                        <option value="-21">-21°C</option>
+                        <option value="-20">-20°C</option>
+                        <option value="-19">-19°C</option>
+                        <option value="-18">-18°C</option>
+                        <option value="-17">-17°C</option>
+                        <option value="-16">-16°C</option>
+                        <option value="-15">-15°C</option>
+                        <option value="-14">-14°C</option>
+                        <option value="-13">-13°C</option>
+                        <option value="-12">-12°C</option>
+                        <option value="-11">-11°C</option>
+                        <option value="-10">-10°C</option>
+                    </select>
+                </label>
                 <label>Notes: <textarea name="pastry_notes"></textarea></label>
                 <label>Signed by: <input type="text" name="pastry_signed" required></label>
 
@@ -59,6 +184,7 @@
                 </fieldset>
 
                 <button type="submit">Submit Monthly Check</button>
+                <div id="monthlyStatus" class="status-box"></div>
             </form>
         </section>
 
@@ -76,6 +202,7 @@
                 </div>
                 <button type="button" id="addBatch">+ Add Batch</button>
                 <button type="submit">Submit Roast Log</button>
+                <div id="roastStatus" class="status-box"></div>
             </form>
         </section>
     </main>
