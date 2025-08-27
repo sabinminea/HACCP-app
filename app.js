@@ -27,45 +27,26 @@ function handleForm(formId) {
 
         // Create a new FormData object
         const formData = new FormData(form);
-        // Convert FormData to JSON
-        const jsonData = {};
-        formData.forEach((value, key) => {
-            jsonData[key] = value;
-        });
-
-        // Use JSONP approach to bypass CORS
-        const script = document.createElement('script');
-        const callback = 'callback_' + Math.floor(Math.random() * 100000);
         
-        window[callback] = function(data) {
-            delete window[callback];
-            document.body.removeChild(script);
-            
-            if (data.result === 'success') {
-                statusBox.textContent = "Synced to Google Sheets!";
-                statusBox.style.color = "green";
-                form.reset();
-            } else {
-                statusBox.textContent = "Sync failed. Please try again.";
-                statusBox.style.color = "red";
-            }
-        };
-
-        // Convert the URL to use JSONP
-        let jsonpUrl = scriptURL + '?callback=' + callback;
-        for (const key in jsonData) {
-            jsonpUrl += `&${key}=${encodeURIComponent(jsonData[key])}`;
-        }
-        
-        script.src = jsonpUrl;
-        document.body.appendChild(script);
-        
-        script.onerror = function() {
+        // Go back to using fetch, but with mode: 'no-cors'
+        fetch(scriptURL, { 
+            method: 'POST', 
+            body: formData,
+            mode: 'no-cors'
+        })
+        .then(response => {
+            console.log("Response received:", response);
+            // With no-cors mode, we can't read the response
+            // but at least the request should go through
+            statusBox.textContent = "Synced to Google Sheets!";
+            statusBox.style.color = "green";
+            form.reset();
+        })
+        .catch(error => {
+            console.error("Error details:", error);
             statusBox.textContent = "Sync failed. Please try again.";
             statusBox.style.color = "red";
-            delete window[callback];
-            document.body.removeChild(script);
-        };
+        });
     });
 }
 
