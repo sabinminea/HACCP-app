@@ -9,6 +9,7 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
     });
 });
 
+// Replace this URL with the new URL you get after redeploying your Google Script
 const scriptURL = "https://script.google.com/macros/s/AKfycbwiRRpSDs4y4TJJXecpeqU9WfW_cLCmxic7tvwAc2rk841PQSQ_OQ0WOlZKxfJZTu0DgA/exec";
 
 // Form submission handler
@@ -24,16 +25,47 @@ function handleForm(formId) {
         statusBox.textContent = "Syncing...";
         statusBox.style.color = "blue";
 
-        fetch(scriptURL, { method: 'POST', body: new FormData(form) })
-            .then(response => {
+        // Create a new FormData object
+        const formData = new FormData(form);
+        // Convert FormData to JSON
+        const jsonData = {};
+        formData.forEach((value, key) => {
+            jsonData[key] = value;
+        });
+
+        // Use JSONP approach to bypass CORS
+        const script = document.createElement('script');
+        const callback = 'callback_' + Math.floor(Math.random() * 100000);
+        
+        window[callback] = function(data) {
+            delete window[callback];
+            document.body.removeChild(script);
+            
+            if (data.result === 'success') {
                 statusBox.textContent = "Synced to Google Sheets!";
                 statusBox.style.color = "green";
                 form.reset();
-            })
-            .catch(error => {
+            } else {
                 statusBox.textContent = "Sync failed. Please try again.";
                 statusBox.style.color = "red";
-            });
+            }
+        };
+
+        // Convert the URL to use JSONP
+        let jsonpUrl = scriptURL + '?callback=' + callback;
+        for (const key in jsonData) {
+            jsonpUrl += `&${key}=${encodeURIComponent(jsonData[key])}`;
+        }
+        
+        script.src = jsonpUrl;
+        document.body.appendChild(script);
+        
+        script.onerror = function() {
+            statusBox.textContent = "Sync failed. Please try again.";
+            statusBox.style.color = "red";
+            delete window[callback];
+            document.body.removeChild(script);
+        };
     });
 }
 
