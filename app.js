@@ -9,8 +9,8 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
     });
 });
 
-// Replace this URL with the new URL you get after redeploying your Google Script
-const scriptURL = "https://script.google.com/macros/s/AKfycbwiRRpSDs4y4TJJXecpeqU9WfW_cLCmxic7tvwAc2rk841PQSQ_OQ0WOlZKxfJZTu0DgA/exec";
+// Google Sheets Web App URL
+const scriptURL = "https://script.google.com/macros/s/AKfycby20Z7DIW9JnW9nfl28XD6OyceRz42cHOsVMVSNFLTzf32rln6O9Tt5ouApJuKT9lms/exec";
 
 // Form submission handler
 function handleForm(formId) {
