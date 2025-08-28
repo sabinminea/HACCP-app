@@ -28,10 +28,23 @@ function handleForm(formId) {
         // Create a new FormData object
         const formData = new FormData(form);
         
+        // Log data for debugging
+        console.log("Form data being sent:");
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+        
+        // Create URL-encoded form data
+        const urlEncodedData = new URLSearchParams(formData).toString();
+        console.log("URL encoded data:", urlEncodedData);
+        
         // Go back to using fetch, but with mode: 'no-cors'
         fetch(scriptURL, { 
             method: 'POST', 
-            body: formData,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: urlEncodedData,
             mode: 'no-cors'
         })
         .then(response => {
