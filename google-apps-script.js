@@ -217,35 +217,43 @@ function createHeaders(sheet, data) {
 function setup() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   
-  // Clear out any existing sheets with these names to start fresh
-  var sheetNames = ["Daily Checks", "Monthly Pastry Check", "Roast Log"];
-  for (var i = 0; i < sheetNames.length; i++) {
-    var existingSheet = spreadsheet.getSheetByName(sheetNames[i]);
-    if (existingSheet) {
-      spreadsheet.deleteSheet(existingSheet);
-    }
+  try {
+    // Safer approach: Update existing sheets or create new ones without deleting
+    setupSheet(spreadsheet, "Daily Checks", ["timestamp", "daily_date", "fridge1", "freezer1", "fridge2", "freezer2", 
+                       "clean_floor", "clean_bar", "clean_windows", "daily_signed", "form_id"]);
+                       
+    setupSheet(spreadsheet, "Monthly Pastry Check", ["timestamp", "monthly_date", "pastry_name", "pastry_temp", "pastry_notes", 
+                           "rodent_check", "insect_check", "pastry_signed", "form_id"]);
+                           
+    setupSheet(spreadsheet, "Roast Log", ["timestamp", "trace_num", "coffee_name", "roast_date", "quantity", "form_id"]);
+    
+    // Log for confirmation
+    Logger.log("All sheets set up with correct headers");
+    return "Setup complete! All sheets set up with proper headers.";
+  } catch(error) {
+    Logger.log("Error in setup: " + error.toString());
+    return "Error in setup: " + error.toString();
+  }
+}
+
+// Helper function to set up a single sheet
+function setupSheet(spreadsheet, sheetName, headers) {
+  var sheet = spreadsheet.getSheetByName(sheetName);
+  
+  if (!sheet) {
+    // Create new sheet if it doesn't exist
+    Logger.log("Creating new sheet: " + sheetName);
+    sheet = spreadsheet.insertSheet(sheetName);
+  } else {
+    // Clear existing sheet but keep it
+    Logger.log("Clearing existing sheet: " + sheetName);
+    sheet.clear();
   }
   
-  // Create sheets with correct headers
-  var dailySheet = spreadsheet.insertSheet("Daily Checks");
-  dailySheet.appendRow(["timestamp", "daily_date", "fridge1", "freezer1", "fridge2", "freezer2", 
-                       "clean_floor", "clean_bar", "clean_windows", "daily_signed", "form_id"]);
-  dailySheet.getRange(1, 1, 1, 11).setFontWeight("bold");
-  dailySheet.setFrozenRows(1);
+  // Add headers to the first row
+  sheet.appendRow(headers);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
+  sheet.setFrozenRows(1);
   
-  var monthlySheet = spreadsheet.insertSheet("Monthly Pastry Check");
-  monthlySheet.appendRow(["timestamp", "monthly_date", "pastry_name", "pastry_temp", "pastry_notes", 
-                         "rodent_check", "insect_check", "pastry_signed", "form_id"]);
-  monthlySheet.getRange(1, 1, 1, 9).setFontWeight("bold");
-  monthlySheet.setFrozenRows(1);
-  
-  var roastSheet = spreadsheet.insertSheet("Roast Log");
-  // Use field names as in the form, without array notation
-  roastSheet.appendRow(["timestamp", "trace_num", "coffee_name", "roast_date", "quantity", "form_id"]);
-  roastSheet.getRange(1, 1, 1, 6).setFontWeight("bold");
-  roastSheet.setFrozenRows(1);
-  
-  // Log for confirmation
-  Logger.log("All sheets recreated with correct headers");
-  return "Setup complete! All sheets recreated with proper headers.";
+  return sheet;
 }
