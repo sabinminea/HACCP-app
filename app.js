@@ -10,7 +10,7 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
 });
 
 // Google Sheets Web App URL
-const scriptURL = "https://script.google.com/macros/s/AKfycbxCXr1wlXuN1aUev1SRh1EUpkFdxOPB7lRDZUurhBSxK9o9UXg77pNuRb30-zILp7E/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzvEMt_jZOrqEL1Bt7OlRKPKWfme1DcBhGJxc8Y9_dWbyy3GX5wR-sqFOvQf0QQowLH/exec";
 
 // Form submission handler
 function handleForm(formId) {
