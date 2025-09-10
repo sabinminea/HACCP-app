@@ -11,6 +11,9 @@ function doPost(e) {
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var sheet;
     
+    // Log all form data keys for debugging
+    Logger.log("Form data keys: " + Object.keys(data).join(", "));
+    
     // Determine which sheet to use based on form data or form_id
     if (data.form_id === 'dailyForm' || data.daily_date) {
       Logger.log("Processing Daily Check form");
@@ -18,13 +21,30 @@ function doPost(e) {
     } else if (data.form_id === 'monthlyForm' || data.monthly_date) {
       Logger.log("Processing Monthly Pastry Check form");
       sheet = spreadsheet.getSheetByName("Monthly Pastry Check") || spreadsheet.getSheets()[0];
-    } else if (data.form_id === 'roastForm' || data.roast_date || data['roast_date[]']) {
+    } else if (data.form_id === 'roastForm' || data.roast_date || data['roast_date[]'] || 
+              (data.trace_num && data.coffee_name)) {
       Logger.log("Processing Roast Log form");
       sheet = spreadsheet.getSheetByName("Roast Log") || spreadsheet.getSheets()[0];
     } else {
       // Default to first sheet if we can't determine
       Logger.log("Could not determine form type, using default sheet");
       sheet = spreadsheet.getSheets()[0];
+      // Try to guess based on field presence
+      for (var key in data) {
+        if (key.includes("daily")) {
+          Logger.log("Guessed Daily Check form based on fields");
+          sheet = spreadsheet.getSheetByName("Daily Checks") || sheet;
+          break;
+        } else if (key.includes("pastry") || key.includes("monthly")) {
+          Logger.log("Guessed Monthly Pastry Check form based on fields");
+          sheet = spreadsheet.getSheetByName("Monthly Pastry Check") || sheet;
+          break;
+        } else if (key.includes("roast") || key.includes("coffee") || key.includes("trace")) {
+          Logger.log("Guessed Roast Log form based on fields");
+          sheet = spreadsheet.getSheetByName("Roast Log") || sheet;
+          break;
+        }
+      }
     }
     
     // If this is the first submission, create headers
@@ -47,21 +67,39 @@ function doPost(e) {
       var header = headers[i];
       var value = "";
       
-      // Check for array notation in form data
+      // Log current header being processed
+      Logger.log("Processing header: " + header);
+      
+      // Check for array notation in form data and handle various possible ways the data might be sent
       if (data[header]) {
         value = data[header];
+        Logger.log("Found direct match for " + header + ": " + value);
       } else if (data[header + '[]']) {
         // Handle array fields (for roast log)
         value = data[header + '[]'];
+        Logger.log("Found array match for " + header + "[]" + ": " + value);
+      } else {
+        // Try to find a case-insensitive match
+        for (var key in data) {
+          if (key.toLowerCase() === header.toLowerCase()) {
+            value = data[key];
+            Logger.log("Found case-insensitive match for " + header + " using key " + key + ": " + value);
+            break;
+          }
+        }
       }
       
       // Handle checkbox values which might be "on" or undefined
-      if (header.startsWith("clean_") || header.includes("check")) {
-        value = value === "on" ? "Yes" : "No";
+      if ((header.startsWith("clean_") || header.includes("check")) && !value) {
+        value = "No"; // Default to "No" if not set
+        Logger.log("Setting default 'No' for checkbox field: " + header);
+      } else if ((header.startsWith("clean_") || header.includes("check")) && value === "on") {
+        value = "Yes";
+        Logger.log("Converting 'on' to 'Yes' for checkbox field: " + header);
       }
       
       row.push(value);
-      Logger.log("Added value for " + header + ": " + value);
+      Logger.log("Added final value for " + header + ": " + value);
     }
     
     // Append the row
@@ -120,22 +158,22 @@ function setup() {
   if (!spreadsheet.getSheetByName("Daily Checks")) {
     var dailySheet = spreadsheet.insertSheet("Daily Checks");
     dailySheet.appendRow(["timestamp", "daily_date", "fridge1", "freezer1", "fridge2", "freezer2", 
-                         "clean_floor", "clean_bar", "clean_windows", "daily_signed"]);
-    dailySheet.getRange(1, 1, 1, 10).setFontWeight("bold");
+                         "clean_floor", "clean_bar", "clean_windows", "daily_signed", "form_id"]);
+    dailySheet.getRange(1, 1, 1, 11).setFontWeight("bold");
     dailySheet.setFrozenRows(1);
   }
   
   if (!spreadsheet.getSheetByName("Monthly Pastry Check")) {
     var monthlySheet = spreadsheet.insertSheet("Monthly Pastry Check");
     monthlySheet.appendRow(["timestamp", "monthly_date", "pastry_name", "pastry_temp", "pastry_notes", 
-                           "rodent_check", "insect_check", "pastry_signed"]);
-    monthlySheet.getRange(1, 1, 1, 8).setFontWeight("bold");
+                           "rodent_check", "insect_check", "pastry_signed", "form_id"]);
+    monthlySheet.getRange(1, 1, 1, 9).setFontWeight("bold");
     monthlySheet.setFrozenRows(1);
   }
   
   if (!spreadsheet.getSheetByName("Roast Log")) {
     var roastSheet = spreadsheet.insertSheet("Roast Log");
-    // Use field names as in the form, with or without array notation
+    // Use field names as in the form, without array notation
     roastSheet.appendRow(["timestamp", "trace_num", "coffee_name", "roast_date", "quantity", "form_id"]);
     roastSheet.getRange(1, 1, 1, 6).setFontWeight("bold");
     roastSheet.setFrozenRows(1);
