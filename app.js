@@ -76,7 +76,7 @@ if (roastForm) {
     if (statusBox) {
         roastForm.addEventListener('submit', e => {
             e.preventDefault();
-            statusBox.textContent = "Syncing...";
+            statusBox.textContent = "Syncing all batches...";
             statusBox.style.color = "blue";
             
             // Get all batch entries
@@ -87,34 +87,16 @@ if (roastForm) {
                 return;
             }
             
-            // Track how many successful submissions we've made
+            const totalBatches = batches.length;
+            let pendingSubmissions = totalBatches;
             let successCount = 0;
-            let totalBatches = batches.length;
+            let failureCount = 0;
             
-            // Function to submit a single batch
-            function submitBatch(batchIndex) {
-                if (batchIndex >= batches.length) {
-                    // We've submitted all batches
-                    statusBox.textContent = `All ${successCount} batches synced to Google Sheets!`;
-                    statusBox.style.color = "green";
-                    
-                    // Clear the form and add an empty batch template back
-                    const container = document.getElementById('batchContainer');
-                    container.innerHTML = '';
-                    
-                    const newBatch = document.createElement('div');
-                    newBatch.classList.add('batch-entry');
-                    newBatch.innerHTML = `
-                        <label>Traceability Number: <input type="text" name="trace_num[]" required></label>
-                        <label>Coffee Name: <input type="text" name="coffee_name[]" required></label>
-                        <label>Date of Roast: <input type="date" name="roast_date[]" required></label>
-                        <label>Quantity (kg): <input type="number" step="0.01" name="quantity[]" required></label>
-                    `;
-                    container.appendChild(newBatch);
-                    return;
-                }
-                
-                const batch = batches[batchIndex];
+            // Create an array to store all the promises
+            const submissionPromises = [];
+            
+            // Process each batch
+            batches.forEach((batch, index) => {
                 const formData = new FormData();
                 
                 // Add form identifier
@@ -132,7 +114,7 @@ if (roastForm) {
                 if (quantity) formData.append('quantity', quantity.value);
                 
                 // Log data for debugging
-                console.log(`Submitting batch ${batchIndex + 1} of ${totalBatches}:`);
+                console.log(`Preparing batch ${index + 1} of ${totalBatches}:`);
                 for (let pair of formData.entries()) {
                     console.log(pair[0] + ': ' + pair[1]);
                 }
@@ -140,11 +122,8 @@ if (roastForm) {
                 // Create URL-encoded form data
                 const urlEncodedData = new URLSearchParams(formData).toString();
                 
-                // Update status
-                statusBox.textContent = `Syncing batch ${batchIndex + 1} of ${totalBatches}...`;
-                
-                // Send to Google Sheets
-                fetch(scriptURL, { 
+                // Create the fetch promise but don't await it yet
+                const submissionPromise = fetch(scriptURL, { 
                     method: 'POST', 
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -153,21 +132,68 @@ if (roastForm) {
                     mode: 'no-cors'
                 })
                 .then(response => {
-                    console.log(`Batch ${batchIndex + 1} response received:`, response);
+                    console.log(`Batch ${index + 1} response received:`, response);
                     successCount++;
-                    
-                    // Submit the next batch
-                    submitBatch(batchIndex + 1);
+                    pendingSubmissions--;
+                    updateStatus();
+                    return { success: true, index };
                 })
                 .catch(error => {
-                    console.error(`Error in batch ${batchIndex + 1}:`, error);
-                    statusBox.textContent = `Sync failed on batch ${batchIndex + 1}. Please try again.`;
-                    statusBox.style.color = "red";
+                    console.error(`Error in batch ${index + 1}:`, error);
+                    failureCount++;
+                    pendingSubmissions--;
+                    updateStatus();
+                    return { success: false, index, error };
                 });
+                
+                // Add to our array of promises
+                submissionPromises.push(submissionPromise);
+            });
+            
+            // Function to update the status display
+            function updateStatus() {
+                if (pendingSubmissions > 0) {
+                    // Still waiting for some submissions to complete
+                    statusBox.textContent = `Processed ${successCount + failureCount} of ${totalBatches} batches...`;
+                } else {
+                    // All submissions have completed (successfully or with errors)
+                    if (failureCount === 0) {
+                        // All were successful
+                        statusBox.textContent = `All ${totalBatches} batches successfully synced to Google Sheets!`;
+                        statusBox.style.color = "green";
+                        
+                        // Clear the form and add an empty batch template back
+                        const container = document.getElementById('batchContainer');
+                        container.innerHTML = '';
+                        
+                        const newBatch = document.createElement('div');
+                        newBatch.classList.add('batch-entry');
+                        newBatch.innerHTML = `
+                            <label>Traceability Number: <input type="text" name="trace_num[]" required></label>
+                            <label>Coffee Name: <input type="text" name="coffee_name[]" required></label>
+                            <label>Date of Roast: <input type="date" name="roast_date[]" required></label>
+                            <label>Quantity (kg): <input type="number" step="0.01" name="quantity[]" required></label>
+                        `;
+                        container.appendChild(newBatch);
+                    } else if (successCount === 0) {
+                        // All failed
+                        statusBox.textContent = `Failed to sync any batches. Please try again.`;
+                        statusBox.style.color = "red";
+                    } else {
+                        // Mixed results
+                        statusBox.textContent = `Synced ${successCount} batches, ${failureCount} failed. Check console for details.`;
+                        statusBox.style.color = "orange";
+                    }
+                }
             }
             
-            // Start the submission process with the first batch
-            submitBatch(0);
+            // Update status immediately to show we're working on it
+            updateStatus();
+            
+            // Using Promise.allSettled so we can track all submissions regardless of success/failure
+            Promise.allSettled(submissionPromises).then(results => {
+                console.log("All batch submissions completed:", results);
+            });
         });
     }
 }
