@@ -225,7 +225,7 @@ function setup() {
     setupSheet(spreadsheet, "Monthly Pastry Check", ["timestamp", "monthly_date", "pastry_name", "pastry_temp", "pastry_notes", 
                            "rodent_check", "insect_check", "pastry_signed", "form_id"]);
                            
-    setupSheet(spreadsheet, "Roast Log", ["timestamp", "trace_num", "coffee_name", "roast_date", "quantity", "form_id"]);
+    setupSheet(spreadsheet, "Roast Log", ["timestamp", "trace_num", "coffee_name", "roast_date", "quantity", "batch_index", "form_id"]);
     
     // Log for confirmation
     Logger.log("All sheets set up with correct headers");

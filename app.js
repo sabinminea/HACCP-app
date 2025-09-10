@@ -76,7 +76,7 @@ if (roastForm) {
     if (statusBox) {
         roastForm.addEventListener('submit', e => {
             e.preventDefault();
-            statusBox.textContent = "Syncing all batches...";
+            statusBox.textContent = "Preparing to sync...";
             statusBox.style.color = "blue";
             
             // Get all batch entries
@@ -87,79 +87,17 @@ if (roastForm) {
                 return;
             }
             
-            const totalBatches = batches.length;
-            let pendingSubmissions = totalBatches;
-            let successCount = 0;
-            let failureCount = 0;
-            
-            // Create an array to store all the promises
-            const submissionPromises = [];
-            
-            // Process each batch
-            batches.forEach((batch, index) => {
-                const formData = new FormData();
+            try {
+                // Process all batches sequentially with a single sync at the end
+                statusBox.textContent = "Syncing all batches to Google Sheets...";
                 
-                // Add form identifier
-                formData.append('form_id', 'roastForm');
+                // For each batch, create and submit a separate request
+                let batchIndex = 0;
                 
-                // Add batch data (without array notation)
-                const traceNum = batch.querySelector('input[name="trace_num[]"]');
-                const coffeeName = batch.querySelector('input[name="coffee_name[]"]');
-                const roastDate = batch.querySelector('input[name="roast_date[]"]');
-                const quantity = batch.querySelector('input[name="quantity[]"]');
-                
-                if (traceNum) formData.append('trace_num', traceNum.value);
-                if (coffeeName) formData.append('coffee_name', coffeeName.value);
-                if (roastDate) formData.append('roast_date', roastDate.value);
-                if (quantity) formData.append('quantity', quantity.value);
-                
-                // Log data for debugging
-                console.log(`Preparing batch ${index + 1} of ${totalBatches}:`);
-                for (let pair of formData.entries()) {
-                    console.log(pair[0] + ': ' + pair[1]);
-                }
-                
-                // Create URL-encoded form data
-                const urlEncodedData = new URLSearchParams(formData).toString();
-                
-                // Create the fetch promise but don't await it yet
-                const submissionPromise = fetch(scriptURL, { 
-                    method: 'POST', 
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: urlEncodedData,
-                    mode: 'no-cors'
-                })
-                .then(response => {
-                    console.log(`Batch ${index + 1} response received:`, response);
-                    successCount++;
-                    pendingSubmissions--;
-                    updateStatus();
-                    return { success: true, index };
-                })
-                .catch(error => {
-                    console.error(`Error in batch ${index + 1}:`, error);
-                    failureCount++;
-                    pendingSubmissions--;
-                    updateStatus();
-                    return { success: false, index, error };
-                });
-                
-                // Add to our array of promises
-                submissionPromises.push(submissionPromise);
-            });
-            
-            // Function to update the status display
-            function updateStatus() {
-                if (pendingSubmissions > 0) {
-                    // Still waiting for some submissions to complete
-                    statusBox.textContent = `Processed ${successCount + failureCount} of ${totalBatches} batches...`;
-                } else {
-                    // All submissions have completed (successfully or with errors)
-                    if (failureCount === 0) {
-                        // All were successful
-                        statusBox.textContent = `All ${totalBatches} batches successfully synced to Google Sheets!`;
+                function processNextBatch() {
+                    if (batchIndex >= batches.length) {
+                        // All batches processed
+                        statusBox.textContent = `All ${batches.length} batches successfully synced to Google Sheets!`;
                         statusBox.style.color = "green";
                         
                         // Clear the form and add an empty batch template back
@@ -175,25 +113,64 @@ if (roastForm) {
                             <label>Quantity (kg): <input type="number" step="0.01" name="quantity[]" required></label>
                         `;
                         container.appendChild(newBatch);
-                    } else if (successCount === 0) {
-                        // All failed
-                        statusBox.textContent = `Failed to sync any batches. Please try again.`;
-                        statusBox.style.color = "red";
-                    } else {
-                        // Mixed results
-                        statusBox.textContent = `Synced ${successCount} batches, ${failureCount} failed. Check console for details.`;
-                        statusBox.style.color = "orange";
+                        return;
                     }
+                    
+                    const batch = batches[batchIndex];
+                    
+                    // Create form data for this batch
+                    const formData = new FormData();
+                    formData.append('form_id', 'roastForm');
+                    formData.append('batch_index', batchIndex);
+                    
+                    // Get batch data
+                    const traceNum = batch.querySelector('input[name="trace_num[]"]');
+                    const coffeeName = batch.querySelector('input[name="coffee_name[]"]');
+                    const roastDate = batch.querySelector('input[name="roast_date[]"]');
+                    const quantity = batch.querySelector('input[name="quantity[]"]');
+                    
+                    if (traceNum) formData.append('trace_num', traceNum.value);
+                    if (coffeeName) formData.append('coffee_name', coffeeName.value);
+                    if (roastDate) formData.append('roast_date', roastDate.value);
+                    if (quantity) formData.append('quantity', quantity.value);
+                    
+                    // Create URL-encoded form data
+                    const urlEncodedData = new URLSearchParams(formData).toString();
+                    
+                    console.log(`Submitting batch ${batchIndex + 1} of ${batches.length}:`, urlEncodedData);
+                    statusBox.textContent = `Syncing batch ${batchIndex + 1} of ${batches.length}...`;
+                    
+                    // Submit this batch
+                    fetch(scriptURL, { 
+                        method: 'POST', 
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: urlEncodedData,
+                        mode: 'no-cors'
+                    })
+                    .then(response => {
+                        console.log(`Batch ${batchIndex + 1} response:`, response);
+                        
+                        // Move to next batch
+                        batchIndex++;
+                        setTimeout(processNextBatch, 500); // Small delay between submissions
+                    })
+                    .catch(error => {
+                        console.error(`Error submitting batch ${batchIndex + 1}:`, error);
+                        statusBox.textContent = `Error submitting batch ${batchIndex + 1}. Please try again.`;
+                        statusBox.style.color = "red";
+                    });
                 }
+                
+                // Start processing the batches
+                processNextBatch();
+                
+            } catch (error) {
+                console.error("Error processing batches:", error);
+                statusBox.textContent = "Error processing batches. Please try again.";
+                statusBox.style.color = "red";
             }
-            
-            // Update status immediately to show we're working on it
-            updateStatus();
-            
-            // Using Promise.allSettled so we can track all submissions regardless of success/failure
-            Promise.allSettled(submissionPromises).then(results => {
-                console.log("All batch submissions completed:", results);
-            });
         });
     }
 }
