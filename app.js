@@ -87,55 +87,21 @@ if (roastForm) {
                 return;
             }
             
-            // Process the first batch only (we'll handle one at a time)
-            const batch = batches[0];
-            const formData = new FormData();
+            // Track how many successful submissions we've made
+            let successCount = 0;
+            let totalBatches = batches.length;
             
-            // Add form identifier
-            formData.append('form_id', 'roastForm');
-            
-            // Add batch data (without array notation)
-            const traceNum = batch.querySelector('input[name="trace_num[]"]');
-            const coffeeName = batch.querySelector('input[name="coffee_name[]"]');
-            const roastDate = batch.querySelector('input[name="roast_date[]"]');
-            const quantity = batch.querySelector('input[name="quantity[]"]');
-            
-            if (traceNum) formData.append('trace_num', traceNum.value);
-            if (coffeeName) formData.append('coffee_name', coffeeName.value);
-            if (roastDate) formData.append('roast_date', roastDate.value);
-            if (quantity) formData.append('quantity', quantity.value);
-            
-            // Log data for debugging
-            console.log("Roast form data being sent:");
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
-            
-            // Create URL-encoded form data
-            const urlEncodedData = new URLSearchParams(formData).toString();
-            console.log("URL encoded data:", urlEncodedData);
-            
-            // Send to Google Sheets
-            fetch(scriptURL, { 
-                method: 'POST', 
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: urlEncodedData,
-                mode: 'no-cors'
-            })
-            .then(response => {
-                console.log("Response received:", response);
-                statusBox.textContent = "Synced to Google Sheets!";
-                statusBox.style.color = "green";
-                
-                // Remove the submitted batch
-                batch.remove();
-                
-                // If there are more batches, don't reset the form
-                if (document.querySelectorAll('.batch-entry').length === 0) {
-                    // Add an empty batch template back
+            // Function to submit a single batch
+            function submitBatch(batchIndex) {
+                if (batchIndex >= batches.length) {
+                    // We've submitted all batches
+                    statusBox.textContent = `All ${successCount} batches synced to Google Sheets!`;
+                    statusBox.style.color = "green";
+                    
+                    // Clear the form and add an empty batch template back
                     const container = document.getElementById('batchContainer');
+                    container.innerHTML = '';
+                    
                     const newBatch = document.createElement('div');
                     newBatch.classList.add('batch-entry');
                     newBatch.innerHTML = `
@@ -145,13 +111,63 @@ if (roastForm) {
                         <label>Quantity (kg): <input type="number" step="0.01" name="quantity[]" required></label>
                     `;
                     container.appendChild(newBatch);
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error("Error details:", error);
-                statusBox.textContent = "Sync failed. Please try again.";
-                statusBox.style.color = "red";
-            });
+                
+                const batch = batches[batchIndex];
+                const formData = new FormData();
+                
+                // Add form identifier
+                formData.append('form_id', 'roastForm');
+                
+                // Add batch data (without array notation)
+                const traceNum = batch.querySelector('input[name="trace_num[]"]');
+                const coffeeName = batch.querySelector('input[name="coffee_name[]"]');
+                const roastDate = batch.querySelector('input[name="roast_date[]"]');
+                const quantity = batch.querySelector('input[name="quantity[]"]');
+                
+                if (traceNum) formData.append('trace_num', traceNum.value);
+                if (coffeeName) formData.append('coffee_name', coffeeName.value);
+                if (roastDate) formData.append('roast_date', roastDate.value);
+                if (quantity) formData.append('quantity', quantity.value);
+                
+                // Log data for debugging
+                console.log(`Submitting batch ${batchIndex + 1} of ${totalBatches}:`);
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+                
+                // Create URL-encoded form data
+                const urlEncodedData = new URLSearchParams(formData).toString();
+                
+                // Update status
+                statusBox.textContent = `Syncing batch ${batchIndex + 1} of ${totalBatches}...`;
+                
+                // Send to Google Sheets
+                fetch(scriptURL, { 
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: urlEncodedData,
+                    mode: 'no-cors'
+                })
+                .then(response => {
+                    console.log(`Batch ${batchIndex + 1} response received:`, response);
+                    successCount++;
+                    
+                    // Submit the next batch
+                    submitBatch(batchIndex + 1);
+                })
+                .catch(error => {
+                    console.error(`Error in batch ${batchIndex + 1}:`, error);
+                    statusBox.textContent = `Sync failed on batch ${batchIndex + 1}. Please try again.`;
+                    statusBox.style.color = "red";
+                });
+            }
+            
+            // Start the submission process with the first batch
+            submitBatch(0);
         });
     }
 }
