@@ -96,14 +96,9 @@ function doPost(e) {
     // Prepare row data
     var row = [];
     
-    // Add timestamp as first column
-    var timestamp = new Date();
-    row.push(timestamp);
-    Logger.log("Added timestamp: " + timestamp);
-    
-    // Process each header (except timestamp) and find matching data
-    Logger.log("Processing " + (headers.length - 1) + " additional columns");
-    for (var i = 1; i < headers.length; i++) {
+    // Process each header and find matching data
+    Logger.log("Processing " + headers.length + " columns");
+    for (var i = 0; i < headers.length; i++) {
       var header = headers[i];
       var value = "";
       
@@ -196,7 +191,7 @@ function doGet(e) {
 
 // This function creates headers for a new sheet based on the submitted data
 function createHeaders(sheet, data) {
-  var headers = ["timestamp"];
+  var headers = [];
   
   // Add all keys from the data as headers
   for (var key in data) {
@@ -219,17 +214,18 @@ function setup() {
   
   try {
     // Safer approach: Update existing sheets or create new ones without deleting
-    setupSheet(spreadsheet, "Daily Checks", ["timestamp", "daily_date", "fridge1", "freezer1", "fridge2", "freezer2", 
+    // Removed timestamp as the first column as requested
+    setupSheet(spreadsheet, "Daily Checks", ["daily_date", "fridge1", "freezer1", "fridge2", "freezer2", 
                        "clean_floor", "clean_bar", "clean_windows", "daily_signed", "form_id"]);
                        
-    setupSheet(spreadsheet, "Monthly Pastry Check", ["timestamp", "monthly_date", "pastry_name", "pastry_temp", "pastry_notes", 
+    setupSheet(spreadsheet, "Monthly Pastry Check", ["monthly_date", "pastry_name", "pastry_temp", "pastry_notes", 
                            "rodent_check", "insect_check", "pastry_signed", "form_id"]);
                            
-    setupSheet(spreadsheet, "Roast Log", ["timestamp", "trace_num", "coffee_name", "roast_date", "quantity", "batch_index", "form_id"]);
+    setupSheet(spreadsheet, "Roast Log", ["trace_num", "coffee_name", "roast_date", "quantity", "batch_index", "form_id"]);
     
     // Log for confirmation
-    Logger.log("All sheets set up with correct headers");
-    return "Setup complete! All sheets set up with proper headers.";
+    Logger.log("All sheets set up with correct headers (timestamp removed)");
+    return "Setup complete! All sheets set up with proper headers (timestamp removed).";
   } catch(error) {
     Logger.log("Error in setup: " + error.toString());
     return "Error in setup: " + error.toString();
