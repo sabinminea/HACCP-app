@@ -93,6 +93,44 @@ function doPost(e) {
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     Logger.log("Headers found: " + headers.join(", "));
     
+    // Ensure headers are correctly ordered for each form type
+    if (formType === "Roast Log" && headers.length > 0) {
+      // Check if the first header is not trace_num
+      if (headers[0] !== "trace_num") {
+        Logger.log("Fixing Roast Log headers - trace_num should be first column");
+        // Reset the sheet with correct headers
+        sheet.clear();
+        sheet.appendRow(["trace_num", "coffee_name", "roast_date", "quantity", "batch_index", "form_id"]);
+        sheet.getRange(1, 1, 1, 6).setFontWeight("bold");
+        headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        Logger.log("Updated headers: " + headers.join(", "));
+      }
+    } else if (formType === "Daily Check" && headers.length > 0) {
+      // Check if the first header is not daily_date
+      if (headers[0] !== "daily_date") {
+        Logger.log("Fixing Daily Checks headers - daily_date should be first column");
+        // Reset the sheet with correct headers
+        sheet.clear();
+        sheet.appendRow(["daily_date", "fridge1", "freezer1", "fridge2", "freezer2", 
+                         "clean_floor", "clean_bar", "clean_windows", "daily_signed", "form_id"]);
+        sheet.getRange(1, 1, 1, 10).setFontWeight("bold");
+        headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        Logger.log("Updated headers: " + headers.join(", "));
+      }
+    } else if (formType === "Monthly Pastry Check" && headers.length > 0) {
+      // Check if the first header is not monthly_date
+      if (headers[0] !== "monthly_date") {
+        Logger.log("Fixing Monthly Pastry Check headers - monthly_date should be first column");
+        // Reset the sheet with correct headers
+        sheet.clear();
+        sheet.appendRow(["monthly_date", "pastry_name", "pastry_temp", "pastry_notes", 
+                         "rodent_check", "insect_check", "pastry_signed", "form_id"]);
+        sheet.getRange(1, 1, 1, 8).setFontWeight("bold");
+        headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        Logger.log("Updated headers: " + headers.join(", "));
+      }
+    }
+    
     // Prepare row data
     var row = [];
     
@@ -192,11 +230,23 @@ function doGet(e) {
 // This function creates headers for a new sheet based on the submitted data
 function createHeaders(sheet, data) {
   var headers = [];
+  var sheetName = sheet.getName();
   
-  // Add all keys from the data as headers
-  for (var key in data) {
-    if (data.hasOwnProperty(key)) {
-      headers.push(key);
+  // Use predefined headers based on sheet name to ensure correct order
+  if (sheetName === "Daily Checks") {
+    headers = ["daily_date", "fridge1", "freezer1", "fridge2", "freezer2", 
+               "clean_floor", "clean_bar", "clean_windows", "daily_signed", "form_id"];
+  } else if (sheetName === "Monthly Pastry Check") {
+    headers = ["monthly_date", "pastry_name", "pastry_temp", "pastry_notes", 
+               "rodent_check", "insect_check", "pastry_signed", "form_id"];
+  } else if (sheetName === "Roast Log") {
+    headers = ["trace_num", "coffee_name", "roast_date", "quantity", "batch_index", "form_id"];
+  } else {
+    // Fallback to using data keys for unknown sheets
+    for (var key in data) {
+      if (data.hasOwnProperty(key)) {
+        headers.push(key);
+      }
     }
   }
   
@@ -206,6 +256,9 @@ function createHeaders(sheet, data) {
   // Format the header row
   sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
   sheet.setFrozenRows(1);
+  
+  // Log the headers created
+  Logger.log("Created headers for " + sheetName + ": " + headers.join(", "));
 }
 
 // This function is used to set up the script when first deployed
@@ -244,6 +297,20 @@ function setupSheet(spreadsheet, sheetName, headers) {
     // Clear existing sheet but keep it
     Logger.log("Clearing existing sheet: " + sheetName);
     sheet.clear();
+  }
+  
+  // Special handling for Roast Log to ensure trace_num is always the first column
+  if (sheetName === "Roast Log") {
+    Logger.log("Setting up Roast Log with trace_num as first column");
+    // Explicitly ensure trace_num is first
+    if (headers[0] !== "trace_num") {
+      // Reorder headers if needed
+      var traceNumIndex = headers.indexOf("trace_num");
+      if (traceNumIndex > 0) {
+        // Move trace_num to the front
+        headers.splice(0, 0, headers.splice(traceNumIndex, 1)[0]);
+      }
+    }
   }
   
   // Add headers to the first row
