@@ -194,8 +194,11 @@
             <form id="roastForm">
                 <div id="batchContainer">
                     <div class="batch-entry">
-                        <label>Traceability Number: <input type="text" name="trace_num[]" required></label>
-                        <label>Coffee Name: <input type="text" name="coffee_name[]" required></label>
+                        <label>Coffee Name: 
+                            <input type="text" name="coffee_name[]" list="coffeeList" class="coffee-name-input" required>
+                            <datalist id="coffeeList"></datalist>
+                        </label>
+                        <label>Traceability Number: <input type="text" name="trace_num[]" class="trace-num-input" required></label>
                         <label>Date of Roast: <input type="date" name="roast_date[]" required></label>
                         <label>Quantity (kg): <input type="number" step="0.01" name="quantity[]" required></label>
                     </div>

@@ -219,12 +219,83 @@ function doPost(e) {
   }
 }
 
-// This function handles testing (GET requests)
+// This function handles GET requests
 function doGet(e) {
-  return ContentService
-    .createTextOutput("Google Apps Script is running!")
-    .setMimeType(ContentService.MimeType.TEXT)
-    .setHeader('Access-Control-Allow-Origin', '*');
+  try {
+    // Check if the request is asking for coffee data
+    if (e.parameter.action === 'getCoffeeData') {
+      var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      var sheet = spreadsheet.getSheetByName("Roast Log");
+      
+      if (!sheet || sheet.getLastRow() <= 1) {
+        // No data yet
+        return ContentService
+          .createTextOutput(JSON.stringify({ result: "success", data: [] }))
+          .setMimeType(ContentService.MimeType.JSON)
+          .setHeader('Access-Control-Allow-Origin', '*');
+      }
+      
+      // Get all data from the sheet
+      var dataRange = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn());
+      var values = dataRange.getValues();
+      var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      
+      // Find the column indices for trace_num and coffee_name
+      var traceNumIndex = headers.indexOf("trace_num");
+      var coffeeNameIndex = headers.indexOf("coffee_name");
+      
+      if (traceNumIndex === -1 || coffeeNameIndex === -1) {
+        Logger.log("Could not find trace_num or coffee_name columns");
+        return ContentService
+          .createTextOutput(JSON.stringify({ result: "error", error: "Column not found" }))
+          .setMimeType(ContentService.MimeType.JSON)
+          .setHeader('Access-Control-Allow-Origin', '*');
+      }
+      
+      // Create a map of unique coffee names to their most recent trace numbers
+      var coffeeMap = {};
+      
+      for (var i = 0; i < values.length; i++) {
+        var traceNum = values[i][traceNumIndex];
+        var coffeeName = values[i][coffeeNameIndex];
+        
+        if (coffeeName && traceNum) {
+          // Store the most recent trace number for each coffee name
+          // Since we're reading from top to bottom, the last entry will be kept
+          coffeeMap[coffeeName] = traceNum;
+        }
+      }
+      
+      // Convert map to array of objects
+      var coffeeData = [];
+      for (var name in coffeeMap) {
+        coffeeData.push({
+          coffeeName: name,
+          traceNum: coffeeMap[name]
+        });
+      }
+      
+      Logger.log("Returning " + coffeeData.length + " unique coffee entries");
+      
+      return ContentService
+        .createTextOutput(JSON.stringify({ result: "success", data: coffeeData }))
+        .setMimeType(ContentService.MimeType.JSON)
+        .setHeader('Access-Control-Allow-Origin', '*');
+    }
+    
+    // Default response for testing
+    return ContentService
+      .createTextOutput("Google Apps Script is running!")
+      .setMimeType(ContentService.MimeType.TEXT)
+      .setHeader('Access-Control-Allow-Origin', '*');
+      
+  } catch(error) {
+    Logger.log("Error in doGet: " + error.toString());
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: "error", error: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*');
+  }
 }
 
 // This function creates headers for a new sheet based on the submitted data

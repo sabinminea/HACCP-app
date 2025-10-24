@@ -10,7 +10,78 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
 });
 
 // Google Sheets Web App URL
-const scriptURL = "https://script.google.com/macros/s/AKfycbwl2J3d6Cp6RNNjBbL9EB8wdz-7ClpLISXiRMo7IOd_9lVSDb3_Wi3MQ0aDJR3CPSyW/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbwV78ySObn8p9qdKd0wHUB-9H3ecxJMb0gpW4LBwe9L2jS-gDiAOqp3xQ0cKP2Nkg/exec";
+
+// Store coffee data globally
+let coffeeData = {};
+
+// Fetch existing coffee data when the page loads
+function loadCoffeeData() {
+    fetch(scriptURL + '?action=getCoffeeData')
+        .then(response => response.json())
+        .then(data => {
+            if (data.result === 'success' && data.data) {
+                // Create a map of coffee names to trace numbers
+                coffeeData = {};
+                const datalist = document.getElementById('coffeeList');
+                datalist.innerHTML = ''; // Clear existing options
+                
+                data.data.forEach(item => {
+                    coffeeData[item.coffeeName] = item.traceNum;
+                    
+                    // Add option to datalist
+                    const option = document.createElement('option');
+                    option.value = item.coffeeName;
+                    datalist.appendChild(option);
+                });
+                
+                console.log('Loaded coffee data:', coffeeData);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading coffee data:', error);
+        });
+}
+
+// Call loadCoffeeData when page loads
+loadCoffeeData();
+
+// Function to setup auto-fill for a batch entry
+function setupBatchAutoFill(batchEntry) {
+    const coffeeNameInput = batchEntry.querySelector('.coffee-name-input');
+    const traceNumInput = batchEntry.querySelector('.trace-num-input');
+    
+    if (coffeeNameInput && traceNumInput) {
+        coffeeNameInput.addEventListener('input', function() {
+            const selectedCoffee = this.value;
+            
+            // Check if this coffee name exists in our data
+            if (coffeeData[selectedCoffee]) {
+                traceNumInput.value = coffeeData[selectedCoffee];
+                traceNumInput.style.backgroundColor = '#e8f5e9'; // Light green to indicate auto-filled
+            } else {
+                // Clear the trace number if it's a new coffee
+                if (traceNumInput.style.backgroundColor === 'rgb(232, 245, 233)') {
+                    traceNumInput.value = '';
+                    traceNumInput.style.backgroundColor = '';
+                }
+            }
+        });
+        
+        // Allow manual editing of trace number
+        traceNumInput.addEventListener('input', function() {
+            this.style.backgroundColor = ''; // Remove highlight when manually edited
+        });
+    }
+}
+
+// Setup auto-fill for the initial batch entry
+document.addEventListener('DOMContentLoaded', function() {
+    const initialBatch = document.querySelector('.batch-entry');
+    if (initialBatch) {
+        setupBatchAutoFill(initialBatch);
+    }
+});
 
 // Form submission handler
 function handleForm(formId) {
@@ -100,6 +171,9 @@ if (roastForm) {
                         statusBox.textContent = `All ${batches.length} batches successfully synced to Google Sheets!`;
                         statusBox.style.color = "green";
                         
+                        // Reload coffee data to include newly added coffees
+                        loadCoffeeData();
+                        
                         // Clear the form and add an empty batch template back
                         const container = document.getElementById('batchContainer');
                         container.innerHTML = '';
@@ -107,12 +181,18 @@ if (roastForm) {
                         const newBatch = document.createElement('div');
                         newBatch.classList.add('batch-entry');
                         newBatch.innerHTML = `
-                            <label>Traceability Number: <input type="text" name="trace_num[]" required></label>
-                            <label>Coffee Name: <input type="text" name="coffee_name[]" required></label>
+                            <label>Coffee Name: 
+                                <input type="text" name="coffee_name[]" list="coffeeList" class="coffee-name-input" required>
+                            </label>
+                            <label>Traceability Number: <input type="text" name="trace_num[]" class="trace-num-input" required></label>
                             <label>Date of Roast: <input type="date" name="roast_date[]" required></label>
                             <label>Quantity (kg): <input type="number" step="0.01" name="quantity[]" required></label>
                         `;
                         container.appendChild(newBatch);
+                        
+                        // Setup auto-fill for the new batch entry
+                        setupBatchAutoFill(newBatch);
+                        
                         return;
                     }
                     
@@ -124,13 +204,13 @@ if (roastForm) {
                     formData.append('batch_index', batchIndex);
                     
                     // Get batch data
-                    const traceNum = batch.querySelector('input[name="trace_num[]"]');
                     const coffeeName = batch.querySelector('input[name="coffee_name[]"]');
+                    const traceNum = batch.querySelector('input[name="trace_num[]"]');
                     const roastDate = batch.querySelector('input[name="roast_date[]"]');
                     const quantity = batch.querySelector('input[name="quantity[]"]');
                     
-                    if (traceNum) formData.append('trace_num', traceNum.value);
                     if (coffeeName) formData.append('coffee_name', coffeeName.value);
+                    if (traceNum) formData.append('trace_num', traceNum.value);
                     if (roastDate) formData.append('roast_date', roastDate.value);
                     if (quantity) formData.append('quantity', quantity.value);
                     
@@ -181,10 +261,15 @@ document.getElementById('addBatch').addEventListener('click', () => {
     const newBatch = document.createElement('div');
     newBatch.classList.add('batch-entry');
     newBatch.innerHTML = `
-        <label>Traceability Number: <input type="text" name="trace_num[]" required></label>
-        <label>Coffee Name: <input type="text" name="coffee_name[]" required></label>
+        <label>Coffee Name: 
+            <input type="text" name="coffee_name[]" list="coffeeList" class="coffee-name-input" required>
+        </label>
+        <label>Traceability Number: <input type="text" name="trace_num[]" class="trace-num-input" required></label>
         <label>Date of Roast: <input type="date" name="roast_date[]" required></label>
         <label>Quantity (kg): <input type="number" step="0.01" name="quantity[]" required></label>
     `;
     container.appendChild(newBatch);
+    
+    // Setup auto-fill for the new batch entry
+    setupBatchAutoFill(newBatch);
 });
