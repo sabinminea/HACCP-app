@@ -195,8 +195,13 @@
                 <div id="batchContainer">
                     <div class="batch-entry">
                         <label>Coffee Name: 
-                            <input type="text" name="coffee_name[]" list="coffeeList" class="coffee-name-input" required>
-                            <datalist id="coffeeList"></datalist>
+                            <select name="coffee_name[]" class="coffee-name-input" required>
+                                <option value="">-- Select or type new coffee --</option>
+                                <option value="__NEW__">+ Add New Coffee</option>
+                            </select>
+                        </label>
+                        <label>Or Enter New Coffee Name: 
+                            <input type="text" class="new-coffee-input" placeholder="Type new coffee name here" style="display:none;">
                         </label>
                         <label>Traceability Number: <input type="text" name="trace_num[]" class="trace-num-input" required></label>
                         <label>Date of Roast: <input type="date" name="roast_date[]" required></label>

@@ -23,19 +23,36 @@ function loadCoffeeData() {
             if (data.result === 'success' && data.data) {
                 // Create a map of coffee names to trace numbers
                 coffeeData = {};
-                const datalist = document.getElementById('coffeeList');
-                datalist.innerHTML = ''; // Clear existing options
+                
+                // Get all coffee select dropdowns
+                const coffeeSelects = document.querySelectorAll('.coffee-name-input');
                 
                 data.data.forEach(item => {
                     coffeeData[item.coffeeName] = item.traceNum;
                     
-                    // Add option to datalist
-                    const option = document.createElement('option');
-                    option.value = item.coffeeName;
-                    datalist.appendChild(option);
+                    // Add option to all select dropdowns
+                    coffeeSelects.forEach(select => {
+                        // Check if option already exists
+                        let optionExists = false;
+                        for (let i = 0; i < select.options.length; i++) {
+                            if (select.options[i].value === item.coffeeName) {
+                                optionExists = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!optionExists) {
+                            const option = document.createElement('option');
+                            option.value = item.coffeeName;
+                            option.textContent = item.coffeeName;
+                            // Insert before the last option (which is "+ Add New Coffee")
+                            select.insertBefore(option, select.options[select.options.length - 1]);
+                        }
+                    });
                 });
                 
                 console.log('Loaded coffee data:', coffeeData);
+                console.log('Total unique coffees:', Object.keys(coffeeData).length);
             }
         })
         .catch(error => {
@@ -48,25 +65,59 @@ loadCoffeeData();
 
 // Function to setup auto-fill for a batch entry
 function setupBatchAutoFill(batchEntry) {
-    const coffeeNameInput = batchEntry.querySelector('.coffee-name-input');
+    const coffeeSelect = batchEntry.querySelector('.coffee-name-input');
+    const newCoffeeInput = batchEntry.querySelector('.new-coffee-input');
     const traceNumInput = batchEntry.querySelector('.trace-num-input');
     
-    if (coffeeNameInput && traceNumInput) {
-        coffeeNameInput.addEventListener('input', function() {
-            const selectedCoffee = this.value;
+    if (coffeeSelect && traceNumInput) {
+        coffeeSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
             
-            // Check if this coffee name exists in our data
-            if (coffeeData[selectedCoffee]) {
-                traceNumInput.value = coffeeData[selectedCoffee];
-                traceNumInput.style.backgroundColor = '#e8f5e9'; // Light green to indicate auto-filled
+            if (selectedValue === '__NEW__') {
+                // Show the new coffee input field
+                if (newCoffeeInput) {
+                    newCoffeeInput.style.display = 'block';
+                    newCoffeeInput.required = true;
+                    this.required = false;
+                }
+                // Clear and enable trace number field
+                traceNumInput.value = '';
+                traceNumInput.readOnly = false;
+                traceNumInput.style.backgroundColor = '';
+            } else if (selectedValue === '') {
+                // Nothing selected
+                if (newCoffeeInput) {
+                    newCoffeeInput.style.display = 'none';
+                    newCoffeeInput.required = false;
+                    this.required = true;
+                }
+                traceNumInput.value = '';
+                traceNumInput.readOnly = false;
+                traceNumInput.style.backgroundColor = '';
             } else {
-                // Clear the trace number if it's a new coffee
-                if (traceNumInput.style.backgroundColor === 'rgb(232, 245, 233)') {
-                    traceNumInput.value = '';
-                    traceNumInput.style.backgroundColor = '';
+                // Existing coffee selected
+                if (newCoffeeInput) {
+                    newCoffeeInput.style.display = 'none';
+                    newCoffeeInput.required = false;
+                    this.required = true;
+                }
+                
+                // Auto-fill trace number if available
+                if (coffeeData[selectedValue]) {
+                    traceNumInput.value = coffeeData[selectedValue];
+                    traceNumInput.style.backgroundColor = '#e8f5e9'; // Light green
+                    traceNumInput.readOnly = false; // Allow manual override
                 }
             }
         });
+        
+        // Handle new coffee input
+        if (newCoffeeInput) {
+            newCoffeeInput.addEventListener('input', function() {
+                // Update the select's value to the new coffee name
+                coffeeSelect.value = '__NEW__';
+            });
+        }
         
         // Allow manual editing of trace number
         traceNumInput.addEventListener('input', function() {
@@ -182,7 +233,13 @@ if (roastForm) {
                         newBatch.classList.add('batch-entry');
                         newBatch.innerHTML = `
                             <label>Coffee Name: 
-                                <input type="text" name="coffee_name[]" list="coffeeList" class="coffee-name-input" required>
+                                <select name="coffee_name[]" class="coffee-name-input" required>
+                                    <option value="">-- Select or type new coffee --</option>
+                                    <option value="__NEW__">+ Add New Coffee</option>
+                                </select>
+                            </label>
+                            <label>Or Enter New Coffee Name: 
+                                <input type="text" class="new-coffee-input" placeholder="Type new coffee name here" style="display:none;">
                             </label>
                             <label>Traceability Number: <input type="text" name="trace_num[]" class="trace-num-input" required></label>
                             <label>Date of Roast: <input type="date" name="roast_date[]" required></label>
@@ -192,6 +249,9 @@ if (roastForm) {
                         
                         // Setup auto-fill for the new batch entry
                         setupBatchAutoFill(newBatch);
+                        
+                        // Reload coffee data to populate the dropdown
+                        setTimeout(() => loadCoffeeData(), 500);
                         
                         return;
                     }
@@ -204,12 +264,21 @@ if (roastForm) {
                     formData.append('batch_index', batchIndex);
                     
                     // Get batch data
-                    const coffeeName = batch.querySelector('input[name="coffee_name[]"]');
+                    const coffeeSelect = batch.querySelector('select[name="coffee_name[]"]');
+                    const newCoffeeInput = batch.querySelector('.new-coffee-input');
                     const traceNum = batch.querySelector('input[name="trace_num[]"]');
                     const roastDate = batch.querySelector('input[name="roast_date[]"]');
                     const quantity = batch.querySelector('input[name="quantity[]"]');
                     
-                    if (coffeeName) formData.append('coffee_name', coffeeName.value);
+                    // Determine the coffee name
+                    let coffeeName = '';
+                    if (coffeeSelect && coffeeSelect.value === '__NEW__' && newCoffeeInput) {
+                        coffeeName = newCoffeeInput.value;
+                    } else if (coffeeSelect) {
+                        coffeeName = coffeeSelect.value;
+                    }
+                    
+                    if (coffeeName) formData.append('coffee_name', coffeeName);
                     if (traceNum) formData.append('trace_num', traceNum.value);
                     if (roastDate) formData.append('roast_date', roastDate.value);
                     if (quantity) formData.append('quantity', quantity.value);
@@ -262,7 +331,13 @@ document.getElementById('addBatch').addEventListener('click', () => {
     newBatch.classList.add('batch-entry');
     newBatch.innerHTML = `
         <label>Coffee Name: 
-            <input type="text" name="coffee_name[]" list="coffeeList" class="coffee-name-input" required>
+            <select name="coffee_name[]" class="coffee-name-input" required>
+                <option value="">-- Select or type new coffee --</option>
+                <option value="__NEW__">+ Add New Coffee</option>
+            </select>
+        </label>
+        <label>Or Enter New Coffee Name: 
+            <input type="text" class="new-coffee-input" placeholder="Type new coffee name here" style="display:none;">
         </label>
         <label>Traceability Number: <input type="text" name="trace_num[]" class="trace-num-input" required></label>
         <label>Date of Roast: <input type="date" name="roast_date[]" required></label>
@@ -272,4 +347,15 @@ document.getElementById('addBatch').addEventListener('click', () => {
     
     // Setup auto-fill for the new batch entry
     setupBatchAutoFill(newBatch);
+    
+    // Populate the dropdown with existing coffee data
+    if (Object.keys(coffeeData).length > 0) {
+        const select = newBatch.querySelector('.coffee-name-input');
+        for (let coffeeName in coffeeData) {
+            const option = document.createElement('option');
+            option.value = coffeeName;
+            option.textContent = coffeeName;
+            select.insertBefore(option, select.options[select.options.length - 1]);
+        }
+    }
 });
