@@ -15,53 +15,95 @@ const scriptURL = "https://script.google.com/macros/s/AKfycbwV78ySObn8p9qdKd0wHU
 // Store coffee data globally
 let coffeeData = {};
 
-// Fetch existing coffee data when the page loads
+// Fetch existing coffee data and refresh all dropdowns
 function loadCoffeeData() {
+    const refreshStatus = document.getElementById('refreshStatus');
+    if (refreshStatus) {
+        refreshStatus.textContent = 'Loading coffee data...';
+        refreshStatus.style.color = '#2196F3';
+    }
+    
     fetch(scriptURL + '?action=getCoffeeData')
         .then(response => response.json())
         .then(data => {
             if (data.result === 'success' && data.data) {
-                // Create a map of coffee names to trace numbers
+                // Clear and recreate the coffee data map
                 coffeeData = {};
                 
                 // Get all coffee select dropdowns
                 const coffeeSelects = document.querySelectorAll('.coffee-name-input');
                 
+                // First, populate the coffeeData map
                 data.data.forEach(item => {
                     coffeeData[item.coffeeName] = item.traceNum;
-                    
-                    // Add option to all select dropdowns
-                    coffeeSelects.forEach(select => {
-                        // Check if option already exists
-                        let optionExists = false;
-                        for (let i = 0; i < select.options.length; i++) {
-                            if (select.options[i].value === item.coffeeName) {
-                                optionExists = true;
-                                break;
-                            }
-                        }
-                        
-                        if (!optionExists) {
-                            const option = document.createElement('option');
-                            option.value = item.coffeeName;
-                            option.textContent = item.coffeeName;
-                            // Insert before the last option (which is "+ Add New Coffee")
-                            select.insertBefore(option, select.options[select.options.length - 1]);
-                        }
-                    });
                 });
                 
                 console.log('Loaded coffee data:', coffeeData);
                 console.log('Total unique coffees:', Object.keys(coffeeData).length);
+                
+                // Now update all dropdowns
+                coffeeSelects.forEach(select => {
+                    // Store the current selection
+                    const currentValue = select.value;
+                    
+                    // Remove all options except the first two (placeholder and "Add New")
+                    while (select.options.length > 2) {
+                        select.remove(2);
+                    }
+                    
+                    // Add all coffee names from coffeeData
+                    for (let coffeeName in coffeeData) {
+                        const option = document.createElement('option');
+                        option.value = coffeeName;
+                        option.textContent = coffeeName;
+                        // Insert before the last option (which is "+ Add New Coffee")
+                        select.insertBefore(option, select.options[select.options.length - 1]);
+                    }
+                    
+                    // Restore previous selection if it still exists
+                    if (currentValue && currentValue !== '' && currentValue !== '__NEW__') {
+                        if (coffeeData[currentValue]) {
+                            select.value = currentValue;
+                        }
+                    }
+                });
+                
+                if (refreshStatus) {
+                    refreshStatus.textContent = `✓ Loaded ${Object.keys(coffeeData).length} coffees`;
+                    refreshStatus.style.color = '#4CAF50';
+                    setTimeout(() => {
+                        refreshStatus.textContent = '';
+                    }, 3000);
+                }
+            } else {
+                if (refreshStatus) {
+                    refreshStatus.textContent = 'No coffee data found';
+                    refreshStatus.style.color = '#FF9800';
+                }
             }
         })
         .catch(error => {
             console.error('Error loading coffee data:', error);
+            if (refreshStatus) {
+                refreshStatus.textContent = '⚠ Error loading data';
+                refreshStatus.style.color = '#f44336';
+            }
         });
 }
 
 // Call loadCoffeeData when page loads
 loadCoffeeData();
+
+// Add refresh button handler
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshButton = document.getElementById('refreshCoffeeList');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            console.log('Refreshing coffee list...');
+            loadCoffeeData();
+        });
+    }
+});
 
 // Function to setup auto-fill for a batch entry
 function setupBatchAutoFill(batchEntry) {
@@ -73,17 +115,21 @@ function setupBatchAutoFill(batchEntry) {
         coffeeSelect.addEventListener('change', function() {
             const selectedValue = this.value;
             
+            console.log('Coffee selected:', selectedValue);
+            
             if (selectedValue === '__NEW__') {
                 // Show the new coffee input field
                 if (newCoffeeInput) {
                     newCoffeeInput.style.display = 'block';
                     newCoffeeInput.required = true;
+                    newCoffeeInput.value = ''; // Clear any previous input
                     this.required = false;
                 }
                 // Clear and enable trace number field
                 traceNumInput.value = '';
                 traceNumInput.readOnly = false;
                 traceNumInput.style.backgroundColor = '';
+                console.log('New coffee mode activated');
             } else if (selectedValue === '') {
                 // Nothing selected
                 if (newCoffeeInput) {
@@ -94,11 +140,13 @@ function setupBatchAutoFill(batchEntry) {
                 traceNumInput.value = '';
                 traceNumInput.readOnly = false;
                 traceNumInput.style.backgroundColor = '';
+                console.log('Selection cleared');
             } else {
                 // Existing coffee selected
                 if (newCoffeeInput) {
                     newCoffeeInput.style.display = 'none';
                     newCoffeeInput.required = false;
+                    newCoffeeInput.value = '';
                     this.required = true;
                 }
                 
@@ -107,6 +155,11 @@ function setupBatchAutoFill(batchEntry) {
                     traceNumInput.value = coffeeData[selectedValue];
                     traceNumInput.style.backgroundColor = '#e8f5e9'; // Light green
                     traceNumInput.readOnly = false; // Allow manual override
+                    console.log('Auto-filled trace number:', coffeeData[selectedValue]);
+                } else {
+                    console.log('No trace number found for:', selectedValue);
+                    traceNumInput.value = '';
+                    traceNumInput.style.backgroundColor = '';
                 }
             }
         });
@@ -114,8 +167,10 @@ function setupBatchAutoFill(batchEntry) {
         // Handle new coffee input
         if (newCoffeeInput) {
             newCoffeeInput.addEventListener('input', function() {
-                // Update the select's value to the new coffee name
-                coffeeSelect.value = '__NEW__';
+                // Keep the select on __NEW__ option
+                if (coffeeSelect.value !== '__NEW__') {
+                    coffeeSelect.value = '__NEW__';
+                }
             });
         }
         

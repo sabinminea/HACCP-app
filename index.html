@@ -191,6 +191,12 @@
         <!-- ROAST LOG -->
         <section id="roast" class="tab">
             <h2>Mala Pražarna, Krakovski nasip 10, 1000 Ljubljana</h2>
+            <div style="margin-bottom: 15px;">
+                <button type="button" id="refreshCoffeeList" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                    🔄 Refresh Coffee List from Google Sheets
+                </button>
+                <span id="refreshStatus" style="margin-left: 10px; font-style: italic; color: #666;"></span>
+            </div>
             <form id="roastForm">
                 <div id="batchContainer">
                     <div class="batch-entry">
