@@ -23,8 +23,21 @@ function loadCoffeeData() {
         refreshStatus.style.color = '#2196F3';
     }
     
-    fetch(scriptURL + '?action=getCoffeeData')
-        .then(response => response.json())
+    fetch(scriptURL + '?action=getCoffeeData', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+        mode: 'cors'
+    })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response OK:', response.ok);
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.result === 'success' && data.data) {
                 // Clear and recreate the coffee data map
