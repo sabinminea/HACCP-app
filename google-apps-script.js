@@ -205,8 +205,7 @@ function doPost(e) {
     // Return success
     return ContentService
       .createTextOutput(JSON.stringify({ result: "success" }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*');
+      .setMimeType(ContentService.MimeType.JSON);
   } catch(error) {
     // Log errors
     Logger.log("Error: " + error.toString());
@@ -214,8 +213,7 @@ function doPost(e) {
     // Return error
     return ContentService
       .createTextOutput(JSON.stringify({ result: "error", error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*');
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -231,8 +229,7 @@ function doGet(e) {
         // No data yet
         return ContentService
           .createTextOutput(JSON.stringify({ result: "success", data: [] }))
-          .setMimeType(ContentService.MimeType.JSON)
-          .setHeader('Access-Control-Allow-Origin', '*');
+          .setMimeType(ContentService.MimeType.JSON);
       }
       
       // Get all data from the sheet
@@ -248,8 +245,7 @@ function doGet(e) {
         Logger.log("Could not find trace_num or coffee_name columns");
         return ContentService
           .createTextOutput(JSON.stringify({ result: "error", error: "Column not found" }))
-          .setMimeType(ContentService.MimeType.JSON)
-          .setHeader('Access-Control-Allow-Origin', '*');
+          .setMimeType(ContentService.MimeType.JSON);
       }
       
       // Create a map of unique coffee names to their most recent trace numbers
@@ -279,22 +275,19 @@ function doGet(e) {
       
       return ContentService
         .createTextOutput(JSON.stringify({ result: "success", data: coffeeData }))
-        .setMimeType(ContentService.MimeType.JSON)
-        .setHeader('Access-Control-Allow-Origin', '*');
+        .setMimeType(ContentService.MimeType.JSON);
     }
     
     // Default response for testing
     return ContentService
       .createTextOutput("Google Apps Script is running!")
-      .setMimeType(ContentService.MimeType.TEXT)
-      .setHeader('Access-Control-Allow-Origin', '*');
+      .setMimeType(ContentService.MimeType.TEXT);
       
   } catch(error) {
     Logger.log("Error in doGet: " + error.toString());
     return ContentService
       .createTextOutput(JSON.stringify({ result: "error", error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeader('Access-Control-Allow-Origin', '*');
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
