@@ -24,11 +24,7 @@ function loadCoffeeData() {
     }
     
     fetch(scriptURL + '?action=getCoffeeData', {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-        },
-        mode: 'cors'
+        method: 'GET'
     })
         .then(response => {
             console.log('Response status:', response.status);
