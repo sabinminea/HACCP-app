@@ -13,6 +13,15 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
 function setupDateInputs() {
     // Add event listeners to all date inputs
     document.querySelectorAll('input[type="date"]').forEach(dateInput => {
+        // Set today's date as default if the field is empty
+        if (!dateInput.value) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${year}-${month}-${day}`;
+        }
+        
         // Remove any existing listeners first
         dateInput.removeEventListener('focus', openDatePicker);
         dateInput.removeEventListener('click', openDatePicker);
