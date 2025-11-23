@@ -10,21 +10,37 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
 });
 
 // Auto-open calendar when date input is focused
-document.addEventListener('DOMContentLoaded', () => {
+function setupDateInputs() {
     // Add event listeners to all date inputs
     document.querySelectorAll('input[type="date"]').forEach(dateInput => {
-        dateInput.addEventListener('focus', function() {
-            // Trigger the calendar to open
-            try {
-                this.showPicker();
-            } catch (e) {
-                // showPicker() might not be supported in all browsers
-                // Fallback: try clicking the input
-                this.click();
-            }
-        });
+        // Remove any existing listeners first
+        dateInput.removeEventListener('focus', openDatePicker);
+        dateInput.removeEventListener('click', openDatePicker);
+        
+        // Add new listeners
+        dateInput.addEventListener('focus', openDatePicker);
+        dateInput.addEventListener('click', openDatePicker);
     });
-});
+}
+
+function openDatePicker(event) {
+    const input = event.target;
+    
+    // Small delay to ensure the input is ready
+    setTimeout(() => {
+        try {
+            // Modern browsers support showPicker()
+            if (typeof input.showPicker === 'function') {
+                input.showPicker();
+            }
+        } catch (e) {
+            console.log('showPicker not supported or failed:', e);
+        }
+    }, 10);
+}
+
+// Initialize date inputs when page loads
+document.addEventListener('DOMContentLoaded', setupDateInputs);
 
 // Google Sheets Web App URL
 const scriptURL = "https://script.google.com/macros/s/AKfycbwV78ySObn8p9qdKd0wHUB-9H3ecxJMb0gpW4LBwe9L2jS-gDiAOqp3xQ0cKP2Nkg/exec";
@@ -428,6 +444,9 @@ document.getElementById('addBatch').addEventListener('click', () => {
     
     // Setup auto-fill for the new batch entry
     setupBatchAutoFill(newBatch);
+    
+    // Setup date inputs for the new batch
+    setupDateInputs();
     
     // Populate the dropdown with existing coffee data
     if (Object.keys(coffeeData).length > 0) {
