@@ -9,6 +9,23 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
     });
 });
 
+// Auto-open calendar when date input is focused
+document.addEventListener('DOMContentLoaded', () => {
+    // Add event listeners to all date inputs
+    document.querySelectorAll('input[type="date"]').forEach(dateInput => {
+        dateInput.addEventListener('focus', function() {
+            // Trigger the calendar to open
+            try {
+                this.showPicker();
+            } catch (e) {
+                // showPicker() might not be supported in all browsers
+                // Fallback: try clicking the input
+                this.click();
+            }
+        });
+    });
+});
+
 // Google Sheets Web App URL
 const scriptURL = "https://script.google.com/macros/s/AKfycbwV78ySObn8p9qdKd0wHUB-9H3ecxJMb0gpW4LBwe9L2jS-gDiAOqp3xQ0cKP2Nkg/exec";
 
